@@ -1,0 +1,85 @@
+name: 5 Prod (Manual)
+
+on:
+  workflow_dispatch:
+
+env:
+  MASTER_DEPLOY_KEY: ${{ secrets.MASTER_DEPLOY_KEY }}
+  AWS_SECRET_ID: ${{ secrets.AWS_SECRET_ID }}
+  AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_BANKING_PROD }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_BANKING_PROD }}
+  GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+  GHCR_USER: ${{ secrets.GHCR_USER }}
+  TAG_VERSION: ${{ github.run_id }}
+
+jobs:
+
+  verify:
+
+    defaults:
+      run:
+        shell: sh
+
+    name: Safety Verification
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Error - Verification Canceled!
+        if: ${{ github.ref != 'refs/heads/main' }}
+        run: |
+          echo "Please, execute this job only on main branch!!!"
+          exit 1
+
+      - name: Verification completed successfully!!
+        if: ${{ github.ref == 'refs/heads/main' }}
+        run: |
+          echo "Verification completed successfully!! Build in progress..."
+
+      - name: Slack Notification
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL_SRE }}
+          SLACK_COLOR: ${{ job.status }}
+          SLACK_ICON: https://snipeit-pub-homolog.s3.amazonaws.com/github.png?size=48
+          SLACK_MESSAGE: 'Subindo Banking Credit API Prod!:rocket:'
+          SLACK_TITLE: Produção!
+          SLACK_USERNAME: Banking Credit API
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_SRE }}
+
+  build:
+
+    defaults:
+      run:
+        shell: bash
+
+    name: Build Image ECR Prod
+    environment: prod
+    runs-on: ubuntu-latest
+    needs: verify
+
+    container:
+      image: ghcr.io/maistodos/kitkat:latest
+      credentials:
+        username: ${{ secrets.GHCR_USER }}
+        password: ${{ secrets.GHCR_TOKEN }}
+
+    services:
+      docker:
+        image: docker:20.10.8-dind
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4      
+
+      - name: Running Build Prod
+        run: |          
+          source /kitkat/ci/inject_env.sh
+          source /kitkat/ci/github/ssh_auth.sh
+  
+          git config --global --add safe.directory /__w/banking.credit-api/banking.credit-api
+          git fetch --tags
+          export TAG_VERSION=$(git tag | sort -V | tail -n 1)
+          echo "Tag Version: $TAG_VERSION"
+          source ./ci/build_image.sh

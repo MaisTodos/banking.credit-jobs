@@ -1,0 +1,58 @@
+name: New Release
+
+on:
+  pull_request:
+    branches: [main]
+    types: [closed]
+
+env:
+  MASTER_DEPLOY_KEY: ${{ secrets.MASTER_DEPLOY_KEY }}
+
+jobs:
+
+  release:
+
+    if: github.event.pull_request.merged == true
+
+    defaults:
+      run:
+        shell: bash
+
+    name: Create New Release
+    runs-on: ubuntu-latest
+
+    container:
+      image: ghcr.io/maistodos/kitkat:latest
+      credentials:
+        username: ${{ secrets.GHCR_USER }}
+        password: ${{ secrets.GHCR_TOKEN }}
+
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GHCR_TOKEN }}
+
+      - name: Slack Notification
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL_SRE }}
+          SLACK_COLOR: ${{ job.status }}
+          SLACK_ICON: https://snipeit-pub-homolog.s3.amazonaws.com/github.png?size=48
+          SLACK_MESSAGE: 'Banking Credit API ${{ github.event.pull_request.title }}:rocket:'
+          SLACK_TITLE: New Release
+          SLACK_USERNAME: Banking Credit API
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_SRE }}
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GHCR_TOKEN }}
+        with:
+          tag_name: ${{ github.event.pull_request.title }}
+          release_name: ${{ github.event.pull_request.title }}
+          body: ${{ github.event.pull_request.title }}
+          draft: false
+          prerelease: false

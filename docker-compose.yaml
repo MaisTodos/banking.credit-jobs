@@ -1,0 +1,53 @@
+services:
+
+  api:
+    user: "1000:1000"
+    image: "banking.credit-jobs:latest"
+    env_file:
+      - .env-docker
+    volumes:
+      - ./:/app/
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    networks:
+      - "banking-credit-jobs"
+    depends_on:
+      - "moto"
+      - "postgres"
+    command: python3 ./src/main.py
+
+  postgres:
+    container_name: banking-credit-jobs-postgres
+    image: postgres
+    environment:
+      - POSTGRES_DB=banking
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - ./docker/database/spec-tests-init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5444:5432"
+    networks:
+      - "banking-credit-jobs"
+
+  moto:
+    container_name: banking-credit-jobs-moto-server
+    build:
+      context: .
+      dockerfile: docker/moto-server/Dockerfile
+    ports:
+      - "5000:5000"
+    networks:
+      - "banking-credit-jobs"
+
+  redis-test:
+    container_name: redis
+    networks:
+      - "banking-credit-jobs"
+    image: redis:4.0.1-alpine
+    ports:
+      - "6333:6379"
+
+networks:
+  banking-credit-jobs:
+    driver: "bridge"

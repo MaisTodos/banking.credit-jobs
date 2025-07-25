@@ -1,0 +1,30 @@
+repos:
+- repo: local
+  hooks:
+    - id: black-check
+      name: black-check
+      entry: black
+      language: system
+      types: [ python ]
+      stages: [pre-commit]
+
+    - id: ruff
+      name: Ruff (Local)
+      entry: ruff check --fix
+      language: system
+      types: [python]
+      stages: [pre-commit]
+
+    - id: pytest-unit-check
+      name: pytest-unit-check
+      entry: pytest -m unit
+      language: system
+      types: [ python ]
+      pass_filenames: false
+      stages: [pre-commit]
+
+    - id: commit-message-check
+      name: Commit message must follow convention
+      entry: python .hooks/commit_message_check.py
+      language: system
+      stages: [ commit-msg ]

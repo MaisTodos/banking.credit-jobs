@@ -1,0 +1,107 @@
+[project]
+name = "banking-credit-jobs"
+version = "0.1.0"
+description = "Batch operations to be performed on credit"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "boto3>=1.38.23",
+    "httpx>=0.28.1",
+    "json-logging>=1.3.0",
+    "moto[rds,s3]>=5.1.8",
+    "psycopg[binary]>=3.2.9",
+    "pydantic>=2.11.5",
+    "pydantic-settings>=2.9.1",
+    "python-i18n>=0.3.9",
+    "sentry-sdk>=2.29.1",
+    "sqlalchemy>=2.0.41",
+    "sqlalchemy-utils>=0.41.2",
+    "typer>=0.16.0",
+    "uvicorn>=0.34.2",
+    "witch-doctor>=1.2.0",
+]
+
+[dependency-groups]
+dev = ["black>=25.1.0", "pre-commit>=4.2.0", "ruff>=0.11.11"]
+test = [
+    "ipdb>=0.13.13",
+    "pytest>=8.3.5",
+    "pytest-asyncio>=1.0.0",
+    "pytest-cov>=6.1.1",
+    "pytest-httpx>=0.35.0",
+    "pytest-vcr>=1.0.2",
+]
+
+
+[tool.pytest.ini_options]
+markers = ["unit: A suit of unit tests", "spec: A suit of integration tests"]
+testpaths = ["tests"]
+pythonpath = ["src"]
+asyncio_default_fixture_loop_scope = "function"
+
+
+[tool.black]
+line-length = 88
+target-version = ['py39']
+
+[tool.ruff]
+lint.select = ["ALL"]
+lint.fixable = ["I001", "F401"]
+lint.extend-ignore = [
+    "ANN002", "COM812",
+    "ANN003",
+    "TD002",
+    "TD003",
+    "B024",
+    "EXE001",
+    "E203",
+    "E501",
+    "ANN202",
+    "D",
+    "INP001",
+    "A001",
+    "A002",
+    "FBT001",
+    "FBT002",
+    "PLR0913",
+    "N818",
+    "ANN204",
+    "ANN401",
+    "S301",
+    "RET504",
+    "TRY300",
+    "ASYNC109",
+    "TRY400",
+    "G004",
+]
+exclude = ["__pycache__", ".git", ".venv"]
+
+[tool.ruff.lint.flake8-annotations]
+suppress-none-returning = true
+suppress-dummy-args = true
+
+[tool.ruff.lint.isort]
+force-wrap-aliases = true
+split-on-trailing-comma = true
+combine-as-imports = true
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+".hooks/commit_message_check.py" = ["T201", "RET505", "ISC001", "ANN201", "FURB105"]
+"tests/**/*.py" = ["TRY300", "SIM117", "SLF001", "S101"]
+"tests/**/test_*.py" = [
+    "ANN201",
+    "SIM117",
+    "ANN001",
+    "S101",
+    "PLR2004",
+    "PT012",
+]
+"tests/**/conftest.py" = [
+    "PT022",
+    "FBT003"
+]
+"tests/unit/stub/**/*.py" = ["ARG002", "ANN001", "ANN201", "ANN002", "ANN003"]
+
+[tool.uv]
+default-groups = "all"

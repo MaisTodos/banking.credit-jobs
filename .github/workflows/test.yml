@@ -1,0 +1,215 @@
+name: 1 Tests
+
+on:
+  pull_request:
+    types: ['opened', 'edited', 'reopened', 'synchronize', 'ready_for_review']
+
+env:
+  MASTER_DEPLOY_KEY: ${{ secrets.MASTER_DEPLOY_KEY }}
+  AWS_SECRET_ID: ${{ secrets.AWS_SECRET_ID }}
+  AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_HOMOLOG }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_HOMOLOG }}
+  GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+  GHCR_USER: ${{ secrets.GHCR_USER }}
+  CI_PIPELINE_ID: ${{ github.run_id }}
+
+jobs:
+
+  upgrade:
+
+    if: (! github.event.pull_request.draft) && github.head_ref != 'master' && github.head_ref != 'develop'
+
+    defaults:
+      run:
+        shell: bash
+
+    name: Upgrade App Base Image...
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify Requirements...
+        run: |
+          FILE=$(git diff --name-only origin/develop -- uv.lock HEAD -- uv.lock; git diff --name-only origin/develop -- pyproject.toml HEAD -- pyproject.toml; git diff --name-only origin/develop -- docker/api/Dockerfile HEAD -- docker/api/Dockerfile; git diff --name-only origin/develop -- docker/deploy/Dockerfile HEAD -- docker/deploy/Dockerfile)
+          echo $FILE
+          if [ "$FILE" == "" ]; then
+            echo "Imagem Atualizada!"
+          else
+            source ./ci/ssh_auth_upgrade.sh
+            docker login -u $GHCR_USER -p $GHCR_TOKEN ghcr.io
+            DOCKER_BUILDKIT=1 docker build --ssh default -t ghcr.io/maistodos/banking-credit-jobs-base:latest -f docker/api/Dockerfile .
+            docker push ghcr.io/maistodos/banking-credit-jobs-base:latest
+          fi;
+
+  unit_test:
+   defaults:
+     run:
+       shell: bash
+
+   name: Run Unit Tests
+   environment: homolog
+   runs-on: ubuntu-latest
+   needs: upgrade
+
+   container:
+     image: ghcr.io/maistodos/banking-credit-jobs-base:latest
+     credentials:
+       username: ${{ secrets.GHCR_USER }}
+       password: ${{ secrets.GHCR_TOKEN }}
+
+   services:
+     redis:
+       image: redis
+
+   steps:
+
+     - name: Checkout
+       uses: actions/checkout@v4
+
+     - name: Install Git
+       run: |
+         apk add --no-cache git
+       shell: sh
+
+     - name: Tools SRE
+       run: |
+         source ./ci/ssh_auth.sh
+         git clone git@github.com:MaisTodos/kitkat.git
+       shell: sh
+
+     - name: Install uv
+       run: |
+         pip install uv==0.7.8
+       shell: sh
+
+     - name: Running Unit Test
+       run: |
+         source ./kitkat/ci/inject_env.sh
+         rm -rf kitkat/
+         export PYTHONPATH=$PYTHONPATH:$(pwd):$(pwd)/src
+         while IFS= read -r line; do
+           if [[ "$line" == *"="* ]]; then
+             export "$line"
+           fi
+         done < .env-docker
+         uv run pytest -s ./tests/unit/ --cov=./src --cov-report term-missing --cov-fail-under 91
+       shell: sh
+
+  upgrade_moto_server:
+    defaults:
+      run:
+        shell: bash
+
+    name: Upgrade Moto Server...
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify Requirements...
+        run: |
+          FILE=$(git diff --name-only origin/develop -- uv.lock HEAD -- uv.lock; git diff --name-only origin/develop -- pyproject.toml HEAD -- pyproject.toml; git diff --name-only origin/develop -- docker/moto-server/Dockerfile HEAD -- docker/moto-server/Dockerfile)
+          echo $FILE
+          if [ "$FILE" == "" ]; then
+            echo "Imagem Atualizada!"
+          else
+            source ./ci/ssh_auth_upgrade.sh
+            docker login -u $GHCR_USER -p $GHCR_TOKEN ghcr.io
+            DOCKER_BUILDKIT=1 docker build --ssh default -t ghcr.io/maistodos/banking-credit-jobs-moto-server:latest -f docker/moto-server/Dockerfile .
+            docker push ghcr.io/maistodos/banking-credit-jobs-moto-server:latest
+          fi;
+
+  spec_test:
+    defaults:
+      run:
+        shell: bash
+
+    name: Run Spec Tests
+    environment: homolog
+    runs-on: ubuntu-latest
+    needs: [upgrade, unit_test, upgrade_moto_server]
+
+    container:
+      image: ghcr.io/maistodos/banking-credit-jobs-base:latest
+      credentials:
+        username: ${{ secrets.GHCR_USER }}
+        password: ${{ secrets.GHCR_TOKEN }}
+
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_DB: banking
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      moto:
+        image: ghcr.io/maistodos/banking-credit-jobs-moto-server:latest
+        credentials:
+          username: ${{ secrets.GHCR_USER }}
+          password: ${{ secrets.GHCR_TOKEN }}
+
+      redis:
+        image: redis:4.0.1-alpine
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Git
+        run: |
+          apk add --no-cache git
+        shell: sh
+
+      - name: Tools SRE
+        run: |
+          source ./ci/ssh_auth.sh
+          git clone git@github.com:MaisTodos/kitkat.git
+        shell: sh
+
+      - name: Install UV
+        run: |
+          pip install uv==0.7.8
+        shell: sh
+
+      - name: Install PostgreSQL client
+        run: |
+          apk update
+          apk add postgresql-client
+        shell: sh
+
+      - name: Run init.sql
+        run: |
+          export PGPASSWORD=postgres
+          psql -h postgres -U postgres -d banking -f ./docker/database/spec-tests-init.sql
+        shell: sh
+
+      - name: Running Spec Test
+        run: |
+          source ./kitkat/ci/inject_env.sh
+          rm -rf kitkat/
+          export PYTHONPATH=$PYTHONPATH:$(pwd):$(pwd)/src
+          while IFS= read -r line; do
+            if [[ "$line" == *"="* ]]; then
+              export "$line"
+            fi
+          done < .env-docker
+          uv run pytest -s ./tests/integration/ --cov=./src --cov-report term-missing --cov-fail-under 92
+        shell: sh
