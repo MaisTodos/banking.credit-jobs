@@ -13,7 +13,7 @@ Descreva o que este pull request está adicionado ao projeto.
 
 - [ ] **Bugfix** - Correção de alguma funcionalidade na develop
 - [ ] **Feature** - Adição de alguma funcionalidade
-- [ ] **Hotfix** - Correção de alguma funcionalidade na master
+- [ ] **Hotfix** - Correção de alguma funcionalidade na main
 - [ ] **Release** - Nova versão de produção
   - [ ] **Parcial** - Nem todos os commits da develop foram adicionados
   - [ ] **Total** - Todos os commits da develop foram adicionados
