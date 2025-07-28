@@ -1,0 +1,49 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: CloudFormation template to create an EventBridge schedule for AWS Batch jobs
+
+Parameters:
+  LoggingLevel:
+    Type: String
+    AllowedValues: [NOTSET, DEBUG, INFO, WARNING, ERROR, CRITICAL]    
+    Default: "INFO"
+    Description: Nível de logging para os jobs.
+
+  Prefix:
+    Type: String
+    Default: "CreditJobs" 
+    Description: Prefixo para execução de jobs
+
+  JobQueueName:
+    Type: String
+    Description: Nome da Job Queue
+
+  JobDefinitionName:
+    Type: String
+    Description: Nome da Job Definition
+
+  ExistingEventBridgeRoleArn:
+    Type: String
+    Description: ARN da role existente para o EventBridge executar jobs do AWS Batch
+
+Resources:
+  EventSchedule:
+    Type: AWS::Scheduler::Schedule
+    Properties: 
+      Description: 'EventBridge schedule to trigger the AWS Batch job'
+      FlexibleTimeWindow: 
+        Mode: "OFF"
+      Name: !Sub "${AWS::StackName}-DailyCreditLimitUpdateJob"
+      ScheduleExpression: 'cron(30 10 * * ? *)' # Process everyday 7:30am
+      State: 'ENABLED'
+      Target: 
+        Arn: arn:aws:scheduler:::aws-sdk:batch:submitJob
+        RoleArn: !Ref ExistingEventBridgeRoleArn
+        Input: !Sub |
+          {
+            "JobName": "${Prefix}-job",
+            "JobDefinition": "${JobDefinitionName}",
+            "JobQueue": "${JobQueueName}",
+            "ContainerOverrides": {
+                "Command": ["/bin/bash","-c","source /var/task/ci/inject_env.sh && python main.py run-update-business-credit-limits"]
+              }            
+          }

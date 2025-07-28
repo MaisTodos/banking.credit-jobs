@@ -10,7 +10,7 @@ def main():
 
     pattern = re.compile(
         r"^(chore|feat|fix|refactor|test)\("
-        r"(?:\s*DBS-\d+\s*(?:,\s*DBS-\d+\s*)*)"
+        r"(?:\s*(?:DBS|DGB)-\d+\s*(?:,\s*(?:DBS|DGB)-\d+\s*)*)"
         r"\):.+",
     )
 

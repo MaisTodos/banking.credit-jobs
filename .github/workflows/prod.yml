@@ -1,8 +1,8 @@
-name: 5 Prod (Manual)
+name: 3 Prod (Manual)
 
 on:
   workflow_dispatch:
-
+      
 env:
   MASTER_DEPLOY_KEY: ${{ secrets.MASTER_DEPLOY_KEY }}
   AWS_SECRET_ID: ${{ secrets.AWS_SECRET_ID }}
@@ -11,7 +11,7 @@ env:
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_BANKING_PROD }}
   GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
   GHCR_USER: ${{ secrets.GHCR_USER }}
-  TAG_VERSION: ${{ github.run_id }}
+  CI_PIPELINE_ID: ${{ github.run_id }}
 
 jobs:
 
@@ -19,22 +19,22 @@ jobs:
 
     defaults:
       run:
-        shell: sh
+        shell: bash
 
-    name: Safety Verification
+    name: Verificando...
     runs-on: ubuntu-latest
 
     steps:
-      - name: Error - Verification Canceled!
+      - name: Error - Verificação Cancelada!
         if: ${{ github.ref != 'refs/heads/main' }}
         run: |
-          echo "Please, execute this job only on main branch!!!"
+          echo "Por favor, execute este job somente na branch main!!!"
           exit 1
 
-      - name: Verification completed successfully!!
+      - name: Verificação Concluída!
         if: ${{ github.ref == 'refs/heads/main' }}
         run: |
-          echo "Verification completed successfully!! Build in progress..."
+          echo "Verificação concluída! Build em andamento..."
 
       - name: Slack Notification
         uses: rtCamp/action-slack-notify@v2
@@ -42,9 +42,9 @@ jobs:
           SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL_SRE }}
           SLACK_COLOR: ${{ job.status }}
           SLACK_ICON: https://snipeit-pub-homolog.s3.amazonaws.com/github.png?size=48
-          SLACK_MESSAGE: 'Subindo Banking Credit API Prod!:rocket:'
+          SLACK_MESSAGE: 'Subindo Banking Pipeline Workflows Prod!:rocket:'
           SLACK_TITLE: Produção!
-          SLACK_USERNAME: Banking Credit API
+          SLACK_USERNAME: Banking Pipeline Workflows
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_SRE }}
 
   build:
@@ -71,15 +71,66 @@ jobs:
     steps:
 
       - name: Checkout
-        uses: actions/checkout@v4      
+        uses: actions/checkout@v4
 
-      - name: Running Build Prod
-        run: |          
+      - name: Running Build Image ECR
+        run: |
           source /kitkat/ci/inject_env.sh
           source /kitkat/ci/github/ssh_auth.sh
-  
-          git config --global --add safe.directory /__w/banking.credit-api/banking.credit-api
-          git fetch --tags
-          export TAG_VERSION=$(git tag | sort -V | tail -n 1)
-          echo "Tag Version: $TAG_VERSION"
           source ./ci/build_image.sh
+
+  eventbrigde:
+
+    defaults:
+      run:
+        shell: bash
+
+    name: Create or Destroy CloudFormation
+    environment: prod
+    runs-on: ubuntu-latest
+    needs: build
+
+    container:
+      image: ghcr.io/maistodos/kitkat:latest
+      credentials:
+        username: ${{ secrets.GHCR_USER }}
+        password: ${{ secrets.GHCR_TOKEN }}
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GHCR_TOKEN }}
+
+      - name: Verify and Apply
+        run: |
+          #
+          source /kitkat/ci/inject_env.sh
+          git config --global --add safe.directory /__w/banking.credit-jobs/banking.credit-jobs
+
+          # Exibir e fazer o Deploy no CloudFormation dos arquivos que foram adicionados/modificados
+          echo "LIST OF FILES FOR ADD / MODIFY!"
+          echo "---------------------------------------------------------------------"
+          for file in $(git diff --name-only --diff-filter=ACMRT HEAD^ -- src/cloudformation/); do
+            echo "Deploying File: $(basename $file .yaml)"
+            aws cloudformation deploy \
+              --template-file $file \
+              --stack-name "$(basename $file .yaml)-Banking-trans-sched-jobs" \
+              --parameter-overrides \
+                JobQueueName=${JOB_QUEUE_NAME} \
+                JobDefinitionName=${JOB_DEFINITION_NAME} \
+                ExistingEventBridgeRoleArn=${EXECUTION_ROLE_ARN}
+            echo "---------------------------------------------------------------------"
+          done
+
+          # Exibir os arquivos que foram excluídos e Deletar a Stack no CloudFormation
+          echo "LIST OF FILES FOR DESTROY!"
+          echo "---------------------------------------------------------------------"
+          for deleted_file in $(git diff --name-only --diff-filter=D HEAD^ -- src/cloudformation/); do
+            echo "Destroing File: $(basename $deleted_file .yaml)"
+            aws cloudformation delete-stack \
+              --stack-name "$(basename $deleted_file .yaml)-Banking-trans-sched-jobs"
+            echo "---------------------------------------------------------------------"
+          done
