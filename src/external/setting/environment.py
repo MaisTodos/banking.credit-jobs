@@ -14,36 +14,15 @@ class Environment(BaseSettings):
 
     ENV: str
 
-    APP_NAME: str
-    APP_VERSION: str
-    APP_HOST: str
-    APP_PORT: int
-
-    ALLOW_ORIGINS: str
-    ALLOW_HEADERS: str
-    ALLOW_METHODS: str
-
     AWS_ACCESS_KEY_ID: str | None = None
     AWS_SECRET_ACCESS_KEY: str | None = None
     AWS_LOCAL_URL: str | None = None
 
-    DATABASE_WRITE_HOST: str
-    DATABASE_WRITE_PORT: str
-    DATABASE_WRITE_USER: str
-    DATABASE_WRITE_PASSWORD: str
-    DATABASE_WRITE_NAME: str
-
-    DATABASE_READ_HOST: str
-    DATABASE_READ_PORT: str
-    DATABASE_READ_USER: str
-    DATABASE_READ_PASSWORD: str
-    DATABASE_READ_NAME: str
-
-    SENTRY_DSN: str
-
-    REDIS_HOST: str
-    REDIS_PORT: int
-    REDIS_DB: int
+    DATABASE_HOST: str
+    DATABASE_PORT: str
+    DATABASE_USER: str
+    DATABASE_PASSWORD: str
+    DATABASE_NAME: str
 
     LOG_LEVEL: LogLevel
 

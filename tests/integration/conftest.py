@@ -40,11 +40,11 @@ def model_factory() -> Callable:
 async def sql_infra_test():
     infra = await SqlSpecStubInfra.create(
         {
-            "host": env.DATABASE_WRITE_HOST,
-            "user": env.DATABASE_WRITE_USER,
-            "port": env.DATABASE_WRITE_PORT,
-            "password": env.DATABASE_WRITE_PASSWORD,
-            "dbname": env.DATABASE_WRITE_NAME,
+            "host": env.DATABASE_HOST,
+            "user": env.DATABASE_USER,
+            "port": env.DATABASE_PORT,
+            "password": env.DATABASE_PASSWORD,
+            "dbname": env.DATABASE_NAME,
             "sslmode": SSL_MODE,
             "sslrootcert": CERT_PATH,
         },
