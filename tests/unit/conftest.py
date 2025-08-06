@@ -13,10 +13,10 @@ from tests.unit.stub.sqlalchemy.session_maker import SqlAlchemyStubAsyncSessionM
 @pytest.fixture(scope="session")
 def test_write_connect_args() -> dict:
     return {
-        "host": env.DATABASE_WRITE_HOST,
-        "user": env.DATABASE_WRITE_USER,
-        "password": env.DATABASE_WRITE_PASSWORD,
-        "dbname": env.DATABASE_WRITE_NAME,
+        "host": env.DATABASE_HOST,
+        "user": env.DATABASE_USER,
+        "password": env.DATABASE_PASSWORD,
+        "dbname": env.DATABASE_NAME,
         "sslmode": "allow" if env.ENV == "local" else "verify-ca",
         "sslrootcert": CERT_PATH,
     }
@@ -25,10 +25,10 @@ def test_write_connect_args() -> dict:
 @pytest.fixture(scope="session")
 def test_read_connect_args() -> dict:
     return {
-        "host": env.DATABASE_READ_HOST,
-        "user": env.DATABASE_READ_USER,
-        "password": env.DATABASE_READ_PASSWORD,
-        "dbname": env.DATABASE_READ_NAME,
+        "host": env.DATABASE_HOST,
+        "user": env.DATABASE_USER,
+        "password": env.DATABASE_PASSWORD,
+        "dbname": env.DATABASE_NAME,
         "sslmode": "allow" if env.ENV == "local" else "verify-ca",
         "sslrootcert": CERT_PATH,
     }
