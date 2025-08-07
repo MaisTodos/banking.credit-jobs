@@ -3,7 +3,7 @@ from witch_doctor import InjectionType, WitchDoctor
 from src.external.infrastructure.container.credit.business_credit import (
     register_business_credit_dependencies,
 )
-from src.external.infrastructure.container.infrastructure.sqlalchemy import (
+from src.external.infrastructure.container.infrastructure.sqlalchemy_ioc import (
     register_sqlalchemy_dependencies,
 )
 from src.external.infrastructure.i18n.python_i18n import PythonI18nInfra

@@ -14,15 +14,11 @@ from src.application.use_cases.credit.import_credit_info import ImportCreditInfo
 from src.application.use_cases.credit.persist_credit_info import (
     PersistCreditInfoUseCase,
 )
+from src.external.port.infrastructure.aws import IS3DownloadInfrastructure
+from src.external.repository.aws.download import S3BaseDownloadInfrastructure
 
 
 def register_business_credit_dependencies(container: Callable) -> None:
-    container(
-        IBusinessCreditFacade,
-        BusinessCreditFacade,
-        InjectionType.SINGLETON,
-    )
-
     container(
         IImportCreditInfoUseCase,
         ImportCreditInfoUseCase,
@@ -32,5 +28,17 @@ def register_business_credit_dependencies(container: Callable) -> None:
     container(
         IPersistCreditInfoUseCase,
         PersistCreditInfoUseCase,
+        InjectionType.SINGLETON,
+    )
+
+    container(
+        IBusinessCreditFacade,
+        BusinessCreditFacade,
+        InjectionType.SINGLETON,
+    )
+
+    container(
+        IS3DownloadInfrastructure,
+        S3BaseDownloadInfrastructure,
         InjectionType.SINGLETON,
     )

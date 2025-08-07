@@ -30,3 +30,6 @@ clean-pre-commit:
 	pre-commit clean
 	pre-commit install
 	pre-commit install --hook-type commit-msg
+
+test:
+	uv run pytest .

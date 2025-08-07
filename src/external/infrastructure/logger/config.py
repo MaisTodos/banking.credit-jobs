@@ -3,7 +3,7 @@ import sys
 
 import json_logging
 
-from src.external.infrastructure.logger.formatter import CreditApiJsonFormatter
+from src.external.infrastructure.logger.formatter import CreditJobsJsonFormatter
 
 
 class JsonLogger:
@@ -19,7 +19,7 @@ class JsonLogger:
 
     def configure_log(self) -> None:
         json_logging.init_non_web(
-            custom_formatter=CreditApiJsonFormatter,
+            custom_formatter=CreditJobsJsonFormatter,
             enable_json=self.__enable_json,
         )
 

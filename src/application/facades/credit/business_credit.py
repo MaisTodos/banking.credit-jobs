@@ -19,8 +19,8 @@ class BusinessCreditFacade(IBusinessCreditFacade):
         self.__import_credit_info = import_credit_info
         self.__persist_credit_info = persist_credit_info
 
-    def import_credit_info(self):
+    def import_credit_info(self) -> list:
         return self.__import_credit_info.perform()
 
-    def persist_credit_info(self, credit_info):
-        self.__persist_credit_info.perform(credit_info)
+    async def persist_credit_info(self, credit_info: list):
+        await self.__persist_credit_info.perform(credit_info)

@@ -10,7 +10,7 @@ from src.external.model.mixin.decimal_mixin import DecimalMixin
 logger = logging.getLogger("domain.entity.credit")
 
 
-class BusinessCreditEntity(BaseModel, DecimalMixin):
+class BusinessCreditEntity(DecimalMixin, BaseModel):
     id: UUID
     document: str
     cgr: Decimal
@@ -20,11 +20,13 @@ class BusinessCreditEntity(BaseModel, DecimalMixin):
     def create(
         cls,
         id: UUID,
-        document: str,
+        document: str | int,
         cgr: float,
         qia: float,
     ) -> "BusinessCreditEntity":
         try:
+            if isinstance(document, int):
+                document = str(document)
             return cls(
                 id=id,
                 document=document,
@@ -43,3 +45,17 @@ class BusinessCreditEntity(BaseModel, DecimalMixin):
                 details=error.errors(),
                 original_error=error,
             ) from error
+
+    @property
+    def as_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "document": self.document,
+            "qia": self.qia,
+            "cgr": self.cgr,
+        }
+
+    def __repr__(self):
+        return (
+            f"<BusinessCreditEntity[{self.document}] qia [{self.qia}] cgr [{self.cgr}]>"
+        )

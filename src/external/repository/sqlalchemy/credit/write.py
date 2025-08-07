@@ -1,37 +1,57 @@
-from sqlalchemy.dialects.postgresql import insert
+import datetime
 
-from src.application.port.repository.sqlalchemy.account_merchant.write import (
-    IAccountMerchantRepositoryWrite,
-)
+from sqlalchemy import Tuple, or_
+from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.sql.dml import ReturningInsert
+
+from src.domain.ports.repository.sql.credit.write import IBusinessCreditRepositoryWrite
 from src.external.error import InfrastructureException, RepositoryException
-from src.external.model.sql.account_merchant.model import AccountMerchant
+from src.external.model.sql.credit.business_credit import BusinessCreditModel
 from src.external.repository.sqlalchemy.write import SQLAlchemyRepositoryWrite
 
 
-class AccountMerchantRepositoryWrite(
-    SQLAlchemyRepositoryWrite[AccountMerchant],
-    IAccountMerchantRepositoryWrite[AccountMerchant],
+class BusinessCreditRepositoryWrite(
+    SQLAlchemyRepositoryWrite[BusinessCreditModel],
+    IBusinessCreditRepositoryWrite[BusinessCreditModel],
 ):
-    async def upsert_batch(
+    def __get_models_as_dicts(
+        self, credit_info: list[BusinessCreditModel]
+    ) -> list[dict]:
+        return [info.row for info in credit_info]
+
+    def __build_upsert_statement(self, values: list[dict]) -> ReturningInsert[Tuple]:
+        stmt = insert(self._model).values(values)
+
+        any_limit_has_changed = or_(
+            self._model.cgr != stmt.excluded.cgr, self._model.qia != stmt.excluded.qia
+        )
+        stmt = stmt.on_conflict_do_update(
+            constraint="credit_limit_business_document_key",
+            set_={
+                "cgr": stmt.excluded.cgr,
+                "qia": stmt.excluded.qia,
+                "updated_at": datetime.datetime.now(tz=datetime.UTC),
+            },
+            where=(any_limit_has_changed),
+        )
+
+        return stmt
+
+    async def upsert_credit_information(
         self,
-        account_merchants: list[AccountMerchant],
-    ) -> list[AccountMerchant]:
+        credit_models: list[BusinessCreditModel],
+    ):
         try:
             async with self._sql_infra_write.session() as session:
-                values = [
-                    account_merchant.row for account_merchant in account_merchants
-                ]
-                stmt = insert(self._model).values(values)
+                values = self.__get_models_as_dicts(credit_models)
 
-                stmt = stmt.on_conflict_do_update(
-                    constraint="account_merchant_unique",
-                    set_={"linked": stmt.excluded.linked},
-                ).returning(self._model)
+                stmt = self.__build_upsert_statement(values)
 
-                result = await session.execute(stmt)
-                return result.scalars().all()
+                _ = await session.execute(stmt)
+                await session.commit()
+
         except InfrastructureException as error:
             raise RepositoryException(
-                tag="external.repository.sql_alchemy.fail_upsert_account_merchants_batch",
+                tag="external.repository.sql_alchemy.credit.write.fail_to_add_business_credit_information",
                 original_error=error,
             ) from error

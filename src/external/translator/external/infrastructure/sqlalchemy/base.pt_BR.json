@@ -1,0 +1,5 @@
+{
+  "pt_BR": {
+    "database_error": "Falha durante operações no banco de dados, rollback efetuado"
+  }
+}

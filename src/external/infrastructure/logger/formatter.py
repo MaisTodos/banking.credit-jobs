@@ -4,13 +4,8 @@ from typing import Any, ClassVar
 import json_logging
 
 
-class CreditApiJsonFormatter(json_logging.JSONLogFormatter):
-    HTTP_SENSITIVE_KEYS: ClassVar[list[str]] = [
-        "Authorization",
-        "access_token",
-        "client_id",
-    ]
-    SENSITIVE_KEYS: ClassVar[list[str]] = HTTP_SENSITIVE_KEYS
+class CreditJobsJsonFormatter(json_logging.JSONLogFormatter):
+    SENSITIVE_KEYS: ClassVar[list[str]] = []
 
     def _format_log_object(self, record: Any, request_util: Any) -> dict:
         json_log_object = super()._format_log_object(record, request_util)
@@ -44,7 +39,7 @@ class CreditApiJsonFormatter(json_logging.JSONLogFormatter):
                     data_copy[key] = replace_value
                 else:
                     data_copy[key] = (
-                        CreditApiJsonFormatter.__remove_sensitive_data_recursive(
+                        CreditJobsJsonFormatter.__remove_sensitive_data_recursive(
                             data_copy[key],
                             sensitive_keys,
                             replace_value,
@@ -52,7 +47,7 @@ class CreditApiJsonFormatter(json_logging.JSONLogFormatter):
                     )
         elif isinstance(data_copy, list):
             data_copy = [
-                CreditApiJsonFormatter.__remove_sensitive_data_recursive(
+                CreditJobsJsonFormatter.__remove_sensitive_data_recursive(
                     item,
                     sensitive_keys,
                     replace_value,
@@ -61,7 +56,7 @@ class CreditApiJsonFormatter(json_logging.JSONLogFormatter):
             ]
         elif isinstance(data_copy, tuple):
             data_copy = tuple(
-                CreditApiJsonFormatter.__remove_sensitive_data_recursive(
+                CreditJobsJsonFormatter.__remove_sensitive_data_recursive(
                     item,
                     sensitive_keys,
                     replace_value,

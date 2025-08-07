@@ -3,7 +3,7 @@ from witch_doctor import WitchDoctor
 from src.external.port.infrastructure.i18n import Ii18nInfrastructure
 
 
-class BaseException(Exception):
+class BaseCustomException(Exception):
     @WitchDoctor.injection
     def __init__(
         self,
@@ -21,13 +21,13 @@ class BaseException(Exception):
         self.original_error = original_error
 
 
-class InfrastructureException(BaseException):
+class InfrastructureException(BaseCustomException):
     pass
 
 
-class RepositoryException(BaseException):
+class RepositoryException(BaseCustomException):
     pass
 
 
-class TransportException(BaseException):
+class UnexpectedException(BaseCustomException):
     pass

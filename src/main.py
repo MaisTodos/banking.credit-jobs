@@ -1,8 +1,10 @@
+from functools import partial
 from pathlib import Path
 
-from typer import Typer, run
+from asyncer import syncify
+from typer import Typer
 
-from src.adapters.controllers.credit.business_credit import BusinessCreditController
+from src.adapter.controllers.credit.business_credit import BusinessCreditController
 from src.external.infrastructure.container import init_ioc_container
 from src.external.infrastructure.i18n import init_i18n_translator
 from src.external.infrastructure.logger import init_json_logger
@@ -18,10 +20,11 @@ app = Typer()
 
 
 @app.command()
-def run_update_business_credit_limits():
+@partial(syncify, raise_sync_error=False)
+async def run_update_business_credit_limits():
     business_credit_controller = BusinessCreditController()
-    business_credit_controller.update_credit_info()
+    await business_credit_controller.updload_credit_info()
 
 
 if __name__ == "__main__":
-    run(app())
+    app()
