@@ -44,6 +44,6 @@ Resources:
             "JobDefinition": "${JobDefinitionName}",
             "JobQueue": "${JobQueueName}",
             "ContainerOverrides": {
-                "Command": ["/bin/bash","-c","source /var/task/ci/inject_env.sh && python main.py run-update-business-credit-limits"]
+                "Command": ["/bin/bash","-c","source /var/task/ci/inject_env.sh && uv run python main.py run-update-business-credit-limits"]
               }            
           }
