@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/bin/sh
 #
-# Adds ssh deploy key to agent and scans gitlab server pubkey
+# Adds ssh deploy key to agent and scans github server pubkey
 #
 
 set -e
