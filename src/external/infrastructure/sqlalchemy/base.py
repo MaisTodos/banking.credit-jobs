@@ -4,10 +4,10 @@ from contextlib import asynccontextmanager
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from src.external.error import InfrastructureException
-from src.external.port.infrastructure.sql import ISqlBaseInfrastructure
+from src.external.port.infrastructure.sql import ISqlInfrastructure
 
 
-class SqlInfrastructure(ISqlBaseInfrastructure):
+class SqlInfrastructure(ISqlInfrastructure):
     def __init__(self, connect_args: str, echo: bool):
         self.__engine = create_async_engine(
             "postgresql+psycopg://",
@@ -30,7 +30,7 @@ class SqlInfrastructure(ISqlBaseInfrastructure):
         except Exception as error:
             await session.rollback()
             raise InfrastructureException(
-                tag="external.infra.sql.database_error",
+                tag="external.infrastructure.sqlalchemy.base.database_error",
                 original_error=error,
             ) from error
         finally:

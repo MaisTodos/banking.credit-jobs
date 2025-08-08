@@ -40,14 +40,6 @@ services:
     networks:
       - "banking-credit-jobs"
 
-  redis-test:
-    container_name: redis
-    networks:
-      - "banking-credit-jobs"
-    image: redis:4.0.1-alpine
-    ports:
-      - "6333:6379"
-
 networks:
   banking-credit-jobs:
     driver: "bridge"

@@ -14,8 +14,13 @@ class Environment(BaseSettings):
 
     ENV: str
 
-    AWS_ACCESS_KEY_ID: str | None = None
-    AWS_SECRET_ACCESS_KEY: str | None = None
+    APP_NAME: str
+    APP_VERSION: str
+    APP_HOST: str
+    APP_PORT: int
+
+    AWS_S3_BUCKET_NAME: str
+    AWS_S3_BUCKET_PATH: str
     AWS_LOCAL_URL: str | None = None
 
     DATABASE_HOST: str
@@ -23,6 +28,8 @@ class Environment(BaseSettings):
     DATABASE_USER: str
     DATABASE_PASSWORD: str
     DATABASE_NAME: str
+
+    SENTRY_DSN: str
 
     LOG_LEVEL: LogLevel
 

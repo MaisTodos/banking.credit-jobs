@@ -1,0 +1,5 @@
+{
+  "pt_BR": {
+    "external.repository.unit_of_work.fail_to_perform_write": "Falha ao tentar executar a operação de escrita no banco de dados"
+  }
+}

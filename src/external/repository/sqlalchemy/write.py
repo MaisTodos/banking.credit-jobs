@@ -4,9 +4,9 @@ from typing import Generic, TypeVar
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from src.domain.ports.repository.sql.repository import IRepositoryWrite
-from src.external.model.base import BaseSQLModel
-from src.external.port.infrastructure.sql import ISqlInfrastructureWrite
+from src.application.port.repository.sqlalchemy.repository import IRepositoryWrite
+from src.external.model.sql.base_sql import BaseSQLModel
+from src.external.port.infrastructure.sql import ISqlInfrastructure
 
 T = TypeVar("T", bound=BaseSQLModel)
 logger = logging.getLogger("external")
@@ -16,7 +16,7 @@ class SQLAlchemyRepositoryWrite(IRepositoryWrite[T], Generic[T]):
     def __init__(
         self,
         model: type[T],
-        sql_infra_write: ISqlInfrastructureWrite,
+        sql_infra_write: ISqlInfrastructure,
         session: AsyncSession,
     ):
         self._session = session

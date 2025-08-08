@@ -1,7 +1,7 @@
 import pytest
 
 from src.application.port.repository.sqlalchemy.repository import IRepositoryWrite
-from src.external.model.sql.base import Base
+from src.external.model.sql.base_sql import BaseSQLModel
 from src.external.repository.sqlalchemy.write import SQLAlchemyRepositoryWrite
 
 
@@ -13,7 +13,7 @@ class TestRepositoryWrite:
         session = await session_context.__aenter__()
 
         repository = SQLAlchemyRepositoryWrite(
-            model=Base,
+            model=BaseSQLModel,
             sql_infra_write=sql_infra_write,
             session=session,
         )

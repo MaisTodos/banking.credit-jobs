@@ -1,9 +1,11 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 
 
 class IBusinessCreditFacade(ABC):
+    @abstractmethod
     def import_credit_info(self):
         pass
 
-    def persist_credit_info(self, credit_info):
+    @abstractmethod
+    async def persist_credit_info(self, credit_info: list):
         pass

@@ -1,6 +1,7 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 
 
 class IPersistCreditInfoUseCase(ABC):
-    def perform(self):
+    @abstractmethod
+    async def perform(self):
         pass

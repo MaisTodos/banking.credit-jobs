@@ -1,18 +1,15 @@
-import logging
 from typing import Self
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.ext.asyncio.engine import AsyncConnection, AsyncEngine, AsyncTransaction
 from sqlalchemy.orm import declarative_base
 
-from src.external.port.infrastructure.sql import ISqlBaseInfrastructure
-
-logger = logging.getLogger("views")
+from src.external.port.infrastructure.sql import ISqlInfrastructure
 
 Base = declarative_base()
 
 
-class SqlSpecStubInfra(ISqlBaseInfrastructure):
+class SqlSpecStubInfra(ISqlInfrastructure):
     def __init__(
         self,
         engine: AsyncEngine,

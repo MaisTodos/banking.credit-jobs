@@ -1,0 +1,6 @@
+{
+  "pt_BR": {
+    "boto_core_client_error": "Erro ao acessar o AWS S3",
+    "unexpected_error": "Erro inesperado enquanto acessando o AWS"
+  }
+}

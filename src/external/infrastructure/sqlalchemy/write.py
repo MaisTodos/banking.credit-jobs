@@ -1,6 +1,6 @@
 from src.external.infrastructure.sqlalchemy.base import SqlInfrastructure
-from src.external.port.infrastructure.sql import ISqlInfrastructureWrite
 
 
-class SqlAlchemyInfrastructureWrite(SqlInfrastructure, ISqlInfrastructureWrite):
-    pass
+class SqlAlchemyInfrastructure(SqlInfrastructure):
+    def __init__(self, connect_args, echo):
+        super().__init__(connect_args, echo)
